@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  # nginx como proxy de entrada
+  nginx-edge:
+    image: nginx:1.25-alpine
+    container_name: nginx_edge
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./default.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - frontend-net
+      - backend-net
+    depends_on:
+      - apache-backend
+
+  # apache backend aislao sin puertos abiertos al host
+  apache-backend:
+    image: httpd:2.4-alpine
+    container_name: apache_backend
+    restart: always
+    volumes:
+      - ./apache/logs:/usr/local/apache2/logs
+    networks:
+      - backend-net
+    # Inyecto la configuracion de la cabecera personalizada y el modulo de IP real directamente
+    command: >
+      sh -c "
+      mkdir -p /usr/local/apache2/htdocs/privado &&
+      echo '<h1>Acceso a Inicio</h1>' > /usr/local/apache2/htdocs/index.html &&
+      echo '<h1>Zona Privada DAW2026</h1>' > /usr/local/apache2/htdocs/privado/index.html &&
+      sed -i 's/#LoadModule remoteip_module/LoadModule remoteip_module/' /usr/local/apache2/conf/httpd.conf &&
+      echo 'RemoteIPHeader X-Forwarded-For' >> /usr/local/apache2/conf/httpd.conf &&
+      echo 'RemoteIPInternalProxy 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16' >> /usr/local/apache2/conf/httpd.conf &&
+      echo 'LogFormat \"%a %l %u %t \\\"%r\\\" %>s %b \\\"%{Referer}i\\\" \\\"%{User-Agent}i\\\"\" combined' >> /usr/local/apache2/conf/httpd.conf &&
+      echo '<Directory \"/usr/local/apache2/htdocs/privado\">' >> /usr/local/apache2/conf/httpd.conf &&
+      echo '    SetEnvIf X-Auth-Token \"^DAW2026$\" AUTH_VALIDA' >> /usr/local/apache2/conf/httpd.conf &&
+      echo '    Require env AUTH_VALIDA' >> /usr/local/apache2/conf/httpd.conf &&
+      echo '</Directory>' >> /usr/local/apache2/conf/httpd.conf &&
+      httpd-foreground
+      "
+
+networks:
+  frontend-net:
+    driver: bridge
+  backend-net:
+    driver: bridge
+    internal: true # Aislamiento del backend
