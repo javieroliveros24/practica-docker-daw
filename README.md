@@ -64,9 +64,9 @@ apache/
   logs/  
     .gitkeep
 
-Captura de **Levantar los contenedores de Docker**
-<img width="601" height="449" alt="6FFCB365-1DC5-48AC-B7AF-09D93FFE390C" src="https://github.com/user-attachments/assets/4dc478de-92a7-4507-a342-f4819419e2fa" />
+Captura de **Levantar los contenedores de Docker**:
 
+<img width="601" height="449" alt="6FFCB365-1DC5-48AC-B7AF-09D93FFE390C" src="https://github.com/user-attachments/assets/4dc478de-92a7-4507-a342-f4819419e2fa" />
 
 
 Captura de **Petición a Nginx Directo**:  
